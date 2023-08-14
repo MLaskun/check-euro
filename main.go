@@ -14,6 +14,9 @@ func main() {
 	client := &http.Client{
 		Timeout: time.Duration(1) * time.Second,
 	}
+
+	now := time.Now().Format(time.RFC1123)
+
 	req, err := http.NewRequest(http.MethodGet, Host, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -26,20 +29,20 @@ func main() {
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
-	log.Println("Time from request to response:", time.Since(start))
-	log.Println("Status code:", resp.StatusCode)
+	log.Printf("[%s] Time from request to response: %s", now, time.Since(start))
+	log.Printf("[%s] Status code: %d", now, resp.StatusCode)
 
 	for _, value := range resp.Header["Content-Type"] {
 		if value == "application/json; charset=utf-8" {
-			log.Println("Response content type is JSON")
+			log.Printf("[%s] Response content type is JSON", now)
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Println("Is json valid:", json.Valid(body))
+			log.Printf("[%s] Is json valid: %t", now, json.Valid(body))
 		} else {
-			log.Printf("Response content type is not JSON but: %s", value)
-			log.Println("There is no JSON in response")
+			log.Printf("[%s] Response content type is not JSON but: %s", now, value)
+			log.Printf("[%s] There is no JSON in response", now)
 		}
 	}
 
