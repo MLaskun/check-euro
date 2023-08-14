@@ -8,9 +8,13 @@ import (
 	"time"
 )
 
+const Host = "http://api.nbp.pl/api/exchangerates/rates/a/eur/last/100/?format=json"
+
 func main() {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://api.nbp.pl/api/exchangerates/rates/a/eur/last/100/?format=json", nil)
+	client := &http.Client{
+		Timeout: time.Duration(1) * time.Second,
+	}
+	req, err := http.NewRequest(http.MethodGet, Host, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,11 +28,19 @@ func main() {
 	defer resp.Body.Close()
 	log.Println("Time from request to response:", time.Since(start))
 	log.Println("Status code:", resp.StatusCode)
-	log.Println("Response content type:", resp.Header["Content-Type"])
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
+	for _, value := range resp.Header["Content-Type"] {
+		if value == "application/json; charset=utf-8" {
+			log.Println("Response content type is JSON")
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("Is json valid:", json.Valid(body))
+		} else {
+			log.Printf("Response content type is not JSON but: %s", value)
+			log.Println("There is no JSON in response")
+		}
 	}
-	log.Println("Is json:", json.Valid(body))
+
 }
