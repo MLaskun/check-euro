@@ -8,6 +8,8 @@
 
 *.out
 
+*.txt
+
 bin/
 
 go.work

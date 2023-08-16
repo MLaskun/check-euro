@@ -2,15 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
 const Host = "http://api.nbp.pl/api/exchangerates/rates/a/eur/last/100/?format=json"
 
 func main() {
+	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
 	client := &http.Client{
 		Timeout: time.Duration(1) * time.Second,
 	}
@@ -29,21 +37,32 @@ func main() {
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
-	log.Printf("[%s] Time from request to response: %s", now, time.Since(start))
-	log.Printf("[%s] Status code: %d", now, resp.StatusCode)
+
+	responseTime := fmt.Sprintf("[%s] Time from request to response: %s", now, time.Since(start))
+	log.Println(responseTime)
+	statusCode := fmt.Sprintf("[%s] Status code: %d", now, resp.StatusCode)
+	log.Println(statusCode)
+	var isJson string
+	var jsonValid string
 
 	for _, value := range resp.Header["Content-Type"] {
 		if value == "application/json; charset=utf-8" {
-			log.Printf("[%s] Response content type is JSON", now)
+			isJson = fmt.Sprintf("[%s] Response content type is JSON", now)
+			log.Println(isJson)
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("[%s] Is json valid: %t", now, json.Valid(body))
+			jsonValid = fmt.Sprintf("[%s] Is json valid: %t", now, json.Valid(body))
+			log.Println(jsonValid)
 		} else {
-			log.Printf("[%s] Response content type is not JSON but: %s", now, value)
-			log.Printf("[%s] There is no JSON in response", now)
+			isJson = fmt.Sprintf("[%s] Response content type is not JSON but: %s", now, value)
+			log.Println(isJson)
+			jsonValid = fmt.Sprintf("[%s] There is no JSON in response", now)
+			log.Println(jsonValid)
 		}
 	}
+
+	f.WriteString(responseTime + "\n" + statusCode + "\n" + isJson + "\n" + jsonValid + "\n")
 
 }
